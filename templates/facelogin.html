@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Face Login</title>
+</head>
+<body>
+
+<h1>Login using your face</h1>
+
+<div id="webcamContainer">
+    <!-- แสดงวิดีโอจากกล้อง Webcam ที่นี่ -->
+    <video id="webcam" width="640" height="480" autoplay></video>
+</div>
+
+<button id="captureButton">Capture</button>
+
+<script>
+// เขียน JavaScript ที่จะใช้ Webcam และเรียก API เพื่อรู้จำใบหน้า
+// (เป็นตัวอย่างเบื้องต้น, คุณอาจจะต้องปรับปรุงให้เข้ากับระบบของคุณ)
+
+navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream => {
+        const video = document.getElementById('webcam');
+        video.srcObject = stream;
+    })
+    .catch(err => {
+        console.error('Could not start video stream:', err);
+    });
+
+document.getElementById('captureButton').addEventListener('click', () => {
+    // จับภาพจาก webcam
+    const video = document.getElementById('webcam');
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+
+    // ส่งข้อมูลภาพไปยังเซิร์ฟเวอร์ (สมมุติว่าใช้ AJAX)
+    const image_data = canvas.toDataURL();
+    fetch('/api/facelogin', {
+        method: 'POST',
+        body: JSON.stringify({ image: image_data }),
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // เข้าสู่ระบบสำเร็จ
+            window.location.href = '/dashboard';
+        } else {
+            // เข้าสู่ระบบไม่สำเร็จ
+            alert('Face not recognized. Please try again.');
+        }
+    })
+    .catch(err => {
+        console.error('Error during face login:', err);
+    });
+});
+</script>
+
+</body>
+</html>
