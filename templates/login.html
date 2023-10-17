@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/css/ionicons.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <style>
+        body {
+      font-family: Monaco, monospace;
+            background-color: rgb(240, 240, 240);
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 0;
+      position: relative;
+
+        }
+
+        .login-form {
+            justify-content: center;
+            align-items: center;
+            width: 340px; /* กำหนดความกว้าง */
+            height: 380px; /* กำหนดความสูง */
+            margin: 15% auto;
+            background-color: #26292b;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0px 5px 15px rgb(0, 0, 0, 0.7);
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            color: white;
+            width: 80%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: none;
+            background-color: transparent;
+            border-bottom: 1px solid #ccc;
+            outline: none;
+            transition: border-bottom-color 0.3s ease;
+        }
+
+        input[type="text"]::placeholder,
+        input[type="password"]::placeholder {
+            color: #ccc;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            border-bottom-color: #51db93;
+        }
+
+        button[type="submit"] {
+            width: 100%;
+            padding: 10px;
+            background-color: #3fb82c;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #17A600;
+            border-radius: 3px;
+            transition: background-color 0.3s ease;
+        }
+        .text-h2 {
+            color: white;
+            font-size: medium;
+        }
+        .text-h3 {
+            margin: 3%;
+            color: white;
+            font-size: small;
+        }
+        .login-link:hover {
+        color: #5f7adb;
+      }
+        .buttons{
+        align-items: center;
+        justify-content: center;
+        padding: 0% 10%;
+        margin: 5px 0 5px 0;
+
+        }
+        .container{
+            align-items: center;
+            justify-content: center;
+        }
+        .buttonx{            
+            width: 100%;
+            padding: 10px;
+            background-color: #3fb82c;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;}
+
+        .buttonx:hover {
+            background-color: #17A600;
+            border-radius: 3px;
+            transition: background-color 0.3s ease;}
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{category}} alert-dismissible fade show" id="error-msg" role="alert">
+            <span>{{ message }}</span>
+            <button class="btn-close" data-bs-dismiss="alert"></button>
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+
+    <div class="login-form">
+        <div ><h2 class="text-h2">Login Form</h2></div>
+        <form id="login-form" method="POST" action="/login" >
+
+            <div>
+                <input type="text" name="username" id="username" placeholder="Username">
+            </div>
+                <div>
+                    <input type="password" name="password" id="password" placeholder="Password">
+                </div>
+            <div class="buttons"><button type="submit">Login</button></div>
+        </form>
+        <div >
+ <h2 class="text-h3">OR</h2>
+        </div>
+        <div>
+            <input type="text" name="faceIdUser" id="faceIdUser" placeholder="Username">
+        </div>
+        <div class="buttons"><button onclick="capture()" class="buttonx" id="faceIdBtn">FaceID</button></div>
+        <video id="video" style="display:none;"></video>
+        <canvas id="canvas" style="display:none;"></canvas>
+    </div>
+
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
+    <script>
+
+function capture() {
+        // ตรวจสอบว่ามีค่าใน input หรือไม่
+        var faceIdUser = document.getElementById('faceIdUser').value;
+        if (!faceIdUser) {
+            alert('กรุณากรอก Username ก่อนที่จะกดปุ่ม FaceID');
+            return;
+        }
+
+        // เปิดกล้อง webcam
+        var video = document.getElementById('video');
+        var canvas = document.getElementById('canvas');
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function (stream) {
+                video.srcObject = stream;
+                video.play();
+            })
+            .catch(function (err) {
+                console.log('An error occurred: ' + err);
+            });
+
+        // รอ 2 วินาทีเพื่อให้กล้องเปิด
+        setTimeout(function () {
+            // จับภาพจากกล้อง
+            var context = canvas.getContext('2d');
+            canvas.width = 640;
+            canvas.height = 480;
+            context.drawImage(video, 0, 0, 640, 480);
+
+            // ปิดกล้อง
+            var stream = video.srcObject;
+            var tracks = stream.getTracks();
+            tracks.forEach(function (track) {
+                track.stop();
+            });
+
+            // ส่งภาพไปยัง Flask
+            var imgData = canvas.toDataURL('image/jpeg');
+            var blobData = dataURItoBlob(imgData);
+            var formData = new FormData();
+            formData.append('faceIdUser', faceIdUser);
+            formData.append('photo', blobData);
+
+            // ส่ง POST request ไปยัง Flask
+            fetch('/faceid', {
+                method: 'POST',
+                body: formData
+            })
+            .then(function(response) {
+                // ทำสิ่งที่คุณต้องการหลังจากได้ผลลัพธ์จาก Flask
+                console.log(response);
+
+                if (response.status === 200) {
+        // Redirect ไปที่ '/dashboard'
+                window.location.href = '/dashboard';
+                } else {
+                alert('FaceID failed or user not found.');
+                console.error('Error:', response.statusText);
+                throw new Error('FaceID failed or user not found.');
+ 
+                console.error('Unexpected response status:', response.status);
+            }
+            })
+            .catch(function(error) {
+
+                alert('Please try login with username password or try again.');
+                console.error('Error:', error);
+            });
+        }, 2000);
+    }
+
+    // ฟังก์ชันแปลง Data URI เป็น Blob
+    function dataURItoBlob(dataURI) {
+        var byteString = atob(dataURI.split(',')[1]);
+        var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+        var ab = new ArrayBuffer(byteString.length);
+        var ia = new Uint8Array(ab);
+        for (var i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
+        }
+        return new Blob([ab], { type: mimeString });
+    }
+
+    const LOCKOUT_DURATION = 60; // 1 minute in seconds
+    // Check if inputs are locked and start a timer
+    const isLocked = JSON.parse("{{ locked }}");
+    if (isLocked) {
+        document.getElementById("username").disabled = true;
+        document.getElementById("password").disabled = true;
+        
+        setTimeout(() => {
+            document.getElementById("username").disabled = false;
+            document.getElementById("password").disabled = false;
+        }, LOCKOUT_DURATION * 1000);
+    }
+function lockInputs(remainingTime) {
+    let usernameInput = document.querySelector("#username");
+    let passwordInput = document.querySelector("#password");
+    
+    usernameInput.disabled = true;
+    passwordInput.disabled = true;
+
+    setTimeout(function () {
+        usernameInput.disabled = false;
+        passwordInput.disabled = false;
+    }, remainingTime * 1000);
+}
+
+    </script>
+</body>
+</html> 
