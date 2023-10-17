@@ -14,7 +14,7 @@ import re
 import face_recognition
 import dlib
 
-db = pymysql.connect(host='localhost', user='root', password='', database='captive_db')
+db = pymysql.connect(host='', user='', password='', database='')
 cursor = db.cursor()
 
 app = Flask(__name__)

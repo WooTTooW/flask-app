@@ -16,7 +16,7 @@ import time
 import json
 
 
-db = MySQLdb.connect(host='localhost', user='root', password='adminroot', database='captive_db')
+db = MySQLdb.connect(host='', user='', password='', database='')
 cursor = db.cursor()
 
 app = Flask(__name__)
